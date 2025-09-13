@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import { API_BASE } from "../lib/config"
@@ -33,29 +32,39 @@ export default function Category() {
     fetch(endpoint).then(r => r.json()).then(data => setItems(data.items || [])).finally(() => setLoading(false))
   }, [endpoint])
 
+  const Controls = () => (
+    <>
+      <input value={q} onChange={e=>setQ(e.target.value)} className="border p-2 rounded w-full" placeholder="Search..."/>
+      <input value={brand} onChange={e=>setBrand(e.target.value)} className="border p-2 rounded w-full" placeholder="Brand"/>
+      <select value={condition} onChange={e=>setCondition(e.target.value)} className="border p-2 rounded w-full">
+        <option value="">Condition</option>
+        <option value="new">New</option>
+        <option value="used">Used</option>
+        <option value="refurbished">Refurbished</option>
+      </select>
+      <input value={priceMin} onChange={e=>setPriceMin(e.target.value)} className="border p-2 rounded w-full" placeholder="Min Price"/>
+      <input value={priceMax} onChange={e=>setPriceMax(e.target.value)} className="border p-2 rounded w-full" placeholder="Max Price"/>
+      <select value={sort} onChange={e=>setSort(e.target.value)} className="border p-2 rounded w-full">
+        <option value="newest">Newest</option>
+        <option value="price_asc">Price Low→High</option>
+        <option value="price_desc">Price High→Low</option>
+      </select>
+    </>
+  )
+
   return (
     <div className="space-y-4">
       <details className="md:hidden">
         <summary className="cursor-pointer border px-2 py-1 rounded inline-block">Filters</summary>
         <div className="mt-2 grid grid-cols-2 gap-2">
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
-        <input value={q} onChange={e=>setQ(e.target.value)} className="border p-2 rounded w-full" placeholder="Search..."/>
-        <input value={brand} onChange={e=>setBrand(e.target.value)} className="border p-2 rounded w-full" placeholder="Brand"/>
-        <select value={condition} onChange={e=>setCondition(e.target.value)} className="border p-2 rounded w-full">
-          <option value="">Condition</option>
-          <option value="new">New</option>
-          <option value="used">Used</option>
-          <option value="refurbished">Refurbished</option>
-        </select>
-        <input value={priceMin} onChange={e=>setPriceMin(e.target.value)} className="border p-2 rounded w-full" placeholder="Min Price"/>
-        <input value={priceMax} onChange={e=>setPriceMax(e.target.value)} className="border p-2 rounded w-full" placeholder="Max Price"/>
-        <select value={sort} onChange={e=>setSort(e.target.value)} className="border p-2 rounded w-full">
-          <option value="newest">Newest</option>
-          <option value="price_asc">Price Low→High</option>
-          <option value="price_desc">Price High→Low</option>
-        </select>
-      </div>
+          <Controls />
+        </div>
       </details>
+
+      <div className="hidden md:grid grid-cols-6 gap-2">
+        <Controls />
+      </div>
+
       {loading ? <div>Loading...</div> : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {items.map(p => (
