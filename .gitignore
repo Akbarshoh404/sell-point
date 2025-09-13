@@ -1,0 +1,23 @@
+# General
+.DS_Store
+node_modules/
+.env
+.env.*
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.python-version
+
+# Build
+dist/
+build/
+
+# Editors
+.vscode/
+.idea/
