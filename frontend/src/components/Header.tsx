@@ -1,5 +1,6 @@
 
 import { Link, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import SearchBar from './SearchBar'
 import { useAuth } from '../store/auth'
 import { useCart } from '../store/cart'
@@ -8,7 +9,7 @@ export default function Header() {
   const { user, token, logout, hydrate } = useAuth()
   const { items } = useCart()
   const nav = useNavigate()
-  if (typeof window !== 'undefined') hydrate()
+  useEffect(() => { hydrate() }, [hydrate])
   return (
     <header className="border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 sticky top-0 z-40">
       <div className="container mx-auto px-4 py-3 flex items-center gap-3">
