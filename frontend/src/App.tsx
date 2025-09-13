@@ -2,7 +2,13 @@ import { Routes, Route, Link } from "react-router-dom"
 import Landing from "./pages/Landing"
 import Category from "./pages/Category"
 import Product from "./pages/Product"
-import Cart from "./pages/Cart"
+import Cart from './pages/Cart'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Profile from './pages/Profile'
+import Orders from './pages/Orders'
+import SellerDashboard from './pages/SellerDashboard'
+import ProtectedRoute from './components/ProtectedRoute'
 
 export default function App() {
   return (
@@ -26,6 +32,13 @@ export default function App() {
           <Route path="/category/:category" element={<Category />} />
           <Route path="/product/:id" element={<Product />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/seller" element={<SellerDashboard />} />
+          </Route>
         </Routes>
       </main>
       <footer className="border-t p-4 text-center">© SellPoint</footer>
