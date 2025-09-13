@@ -13,7 +13,7 @@ export default function Product() {
   }, [id])
   if (!item) return <div>Loading...</div>
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <h1 className="text-xl font-bold">{item.title}</h1>
       <div className="text-gray-600">{item.brand} {item.model} • {item.condition}</div>
       <div className="text-2xl">${(item.price - item.discount).toFixed(2)}</div>

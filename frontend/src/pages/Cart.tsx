@@ -38,7 +38,7 @@ export default function Cart() {
         {items.map(it => {
           const p = products[it.productId]
           return (
-            <div key={it.id} className="border p-3 rounded flex items-center gap-3">
+            <div key={it.id} className="border p-3 rounded flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <div className="flex-1">
                 <div className="font-medium">{p?.title || `Product #${it.productId}`}</div>
                 <div className="text-sm text-gray-500">Qty: 

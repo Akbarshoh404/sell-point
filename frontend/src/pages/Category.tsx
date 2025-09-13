@@ -35,6 +35,9 @@ export default function Category() {
 
   return (
     <div className="space-y-4">
+      <details className="md:hidden">
+        <summary className="cursor-pointer border px-2 py-1 rounded inline-block">Filters</summary>
+        <div className="mt-2 grid grid-cols-2 gap-2">
       <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
         <input value={q} onChange={e=>setQ(e.target.value)} className="border p-2 rounded w-full" placeholder="Search..."/>
         <input value={brand} onChange={e=>setBrand(e.target.value)} className="border p-2 rounded w-full" placeholder="Brand"/>
@@ -52,6 +55,7 @@ export default function Category() {
           <option value="price_desc">Price High→Low</option>
         </select>
       </div>
+      </details>
       {loading ? <div>Loading...</div> : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {items.map(p => (

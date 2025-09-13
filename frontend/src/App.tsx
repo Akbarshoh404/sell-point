@@ -25,9 +25,9 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b">
-        <div className="container mx-auto p-4 flex gap-4 items-center">
+        <div className="container mx-auto p-4 flex gap-3 items-center">
           <Link to="/" className="font-bold">SellPoint</Link>
-          <nav className="flex gap-4">
+          <nav className="hidden sm:flex gap-4">
             <Link to="/category/phones">Phones</Link>
             <Link to="/category/laptops">Laptops</Link>
             <Link to="/category/pcs">PCs</Link>
