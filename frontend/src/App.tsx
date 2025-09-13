@@ -14,6 +14,9 @@ import ProtectedRoute from './components/ProtectedRoute'
 import { useAuth } from './store/auth'
 import { useCart } from './store/cart'
 
+import Header from './components/Header'
+import Footer from './components/Footer'
+
 export default function App() {
   const nav = useNavigate()
   const { user, token, logout, hydrate } = useAuth()
@@ -24,6 +27,8 @@ export default function App() {
   }
   return (
     <div className="min-h-screen flex flex-col">
+      <Header />
+      {/* header removed */}
       <header className="border-b">
         <div className="container mx-auto p-4 flex gap-3 items-center">
           <Link to="/" className="font-bold">SellPoint</Link>
@@ -70,6 +75,7 @@ export default function App() {
         </Routes>
       </main>
       <footer className="border-t p-4 text-center">© SellPoint</footer>
+          <Footer />
     </div>
   )
 }

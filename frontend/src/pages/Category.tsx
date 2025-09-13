@@ -53,7 +53,8 @@ export default function Category() {
   )
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div className="md:col-span-1 space-y-3">
       <details className="md:hidden">
         <summary className="cursor-pointer border px-2 py-1 rounded inline-block">Filters</summary>
         <div className="mt-2 grid grid-cols-2 gap-2">
@@ -65,6 +66,8 @@ export default function Category() {
         <Controls />
       </div>
 
+      </div>
+      <div className="md:col-span-3">
       {loading ? <div>Loading...</div> : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {items.map(p => (
@@ -76,6 +79,7 @@ export default function Category() {
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }
