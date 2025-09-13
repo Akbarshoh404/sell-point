@@ -1,5 +1,6 @@
 
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import Landing from './pages/Landing'
 import Category from './pages/Category'
 import Product from './pages/Product'
@@ -22,42 +23,18 @@ export default function App() {
   const { user, token, logout, hydrate } = useAuth()
   const { items } = useCart()
   // hydrate auth on mount
-  if (typeof window !== 'undefined') {
-    hydrate()
-  }
+  useEffect(() => { hydrate() }, [hydrate])
+  const [showBanner, setShowBanner] = useState(true)
+  useEffect(() => { const t = setTimeout(() => setShowBanner(false), 2500); return () => clearTimeout(t) }, [])
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      {/* header removed */}
-      <header className="border-b">
-        <div className="container mx-auto p-4 flex gap-3 items-center">
-          <Link to="/" className="font-bold">SellPoint</Link>
-          <nav className="hidden sm:flex gap-4">
-            <Link to="/category/phones">Phones</Link>
-            <Link to="/category/laptops">Laptops</Link>
-            <Link to="/category/pcs">PCs</Link>
-            <Link to="/category/consoles">Consoles</Link>
-            <Link to="/category/accessories">Accessories</Link>
-          </nav>
-          <div className="ml-auto flex items-center gap-4">
-            <Link to="/cart">Cart{items?.length ? ` (${items.length})` : ''}</Link>
-            {token ? (
-              <>
-                <Link to="/orders">Orders</Link>
-                {user?.role === 'seller' && (<Link to="/seller">Seller</Link>)}
-                {user?.role === 'admin' && (<Link to="/admin">Admin</Link>)}
-                <Link to="/profile">{user?.email}</Link>
-                <button className="border px-2 py-1 rounded" onClick={() => { logout(); nav('/')}}>Logout</button>
-              </>
-            ) : (
-              <>
-                <Link to="/login">Login</Link>
-                <Link to="/register">Register</Link>
-              </>
-            )}
-          </div>
+      {showBanner && (
+        <div role="status" aria-live="polite" className="bg-emerald-50 text-emerald-700 text-sm px-4 py-2 text-center">
+          Optimizing layout for your device...
         </div>
-      </header>
+      )}
+      
       <main className="container mx-auto p-4 flex-1">
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -74,8 +51,7 @@ export default function App() {
           </Route>
         </Routes>
       </main>
-      <footer className="border-t p-4 text-center">© SellPoint</footer>
-          <Footer />
+      <Footer />
     </div>
   )
 }
