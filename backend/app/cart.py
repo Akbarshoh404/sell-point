@@ -20,8 +20,7 @@ def add_cart():
     data = request.get_json() or {}
     product_id = int(data.get('productId'))
     quantity = int(data.get('quantity', 1))
-    Product.queryget = Product.query.get
-    Product.queryget(product_id) or (_ for _ in ()).throw(Exception())
+    Product.query.get_or_404(product_id)
     item = CartItem.query.filter_by(user_id=uid, product_id=product_id).first()
     if item:
         item.quantity += quantity
