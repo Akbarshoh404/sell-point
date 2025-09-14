@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { API_BASE } from "../lib/config"
 import ProductCard from "../components/ProductCard"
 
@@ -58,12 +58,11 @@ export default function Category() {
         </div>
       </details>
 
-      <div className="hidden md:grid grid-cols-6 gap-2">
+      <div className="hidden md:grid grid-cols-1 gap-2">
         <Controls />
       </div>
 
       </div>
-      <div className="md:col-span-3">
       <div className="md:col-span-3 space-y-4">
         <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50 border rounded p-3">
           <div className="text-sm text-gray-600">{items.length} results</div>
@@ -81,6 +80,7 @@ export default function Category() {
         </div>
       )}
       </div>
+    </div>
     </div>
   )
 }
