@@ -11,6 +11,7 @@ import Profile from './pages/Profile'
 import Orders from './pages/Orders'
 import SellerDashboard from './pages/SellerDashboard'
 import AdminDashboard from './pages/AdminDashboard'
+import Users from './pages/Users'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import FAQ from './pages/FAQ'
@@ -51,6 +52,7 @@ export default function App() {
             <Route path="/orders" element={<Orders />} />
             <Route path="/seller" element={<SellerDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/users" element={<Users />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/faq" element={<FAQ />} />

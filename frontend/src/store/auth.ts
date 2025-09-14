@@ -5,6 +5,7 @@ export type User = { id: number; email: string; role: string; name?: string | nu
 
 type AuthState = {
   user: User | null
+  hydrated: boolean
   setUser: (user: User | null) => void
   hydrate: () => void
   logout: () => void
@@ -12,6 +13,7 @@ type AuthState = {
 
 export const useAuth = create<AuthState>((set) => ({
   user: null,
+  hydrated: false,
   setUser: (user) => {
     if (user) localStorage.setItem('sp_user', JSON.stringify(user))
     else localStorage.removeItem('sp_user')
@@ -19,7 +21,7 @@ export const useAuth = create<AuthState>((set) => ({
   },
   hydrate: () => {
     const u = localStorage.getItem('sp_user')
-    set({ user: u ? JSON.parse(u) : null })
+    set({ user: u ? JSON.parse(u) : null, hydrated: true })
   },
   logout: () => {
     localStorage.removeItem('sp_user')

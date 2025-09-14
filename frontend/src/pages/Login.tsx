@@ -29,7 +29,7 @@ export default function Login() {
 
   return (
     <div className="max-w-md mx-auto space-y-4 bg-white/90 backdrop-blur rounded-xl p-6 shadow-sm">
-      <h1 className="text-xl font-bold">Login</h1>
+      <h1 className="text-xl font-bold">🔐 Login</h1>
       {error && <div className="text-red-600 text-sm">{error}</div>}
       <form onSubmit={submit} className="space-y-3">
         <input className="w-full border p-2 rounded" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
