@@ -1,4 +1,4 @@
-# SellPoint – Multi‑Vendor Electronics Marketplace
+# SellPoint – Multi‑Vendor Electronics Marketplace ✨🛒
 
 SellPoint is a multi-vendor electronics marketplace where both individuals and stores can sell electronics such as phones, laptops, PCs, gaming consoles, and accessories. It supports dynamic specifications per category, advanced filtering, secure authentication, and basic cart/orders.
 
@@ -12,14 +12,14 @@ SellPoint is a multi-vendor electronics marketplace where both individuals and s
 - Cart & orders: add/update/remove cart items, create orders (MVP Cash on Delivery)
 - Admin-ready: placeholders for user/product management and approvals
 
-## Tech Stack
+## Tech Stack ⚙️
 
 - Backend: Python, Flask, SQLAlchemy, JWT, CORS
 - Database: SQLite (dev default) or PostgreSQL via `DATABASE_URL`
 - Frontend: React (Vite) + TypeScript + TailwindCSS + Zustand (planned in `frontend/`)
 - Deployment: Docker + docker-compose (API + Postgres)
 
-## Monorepo Structure
+## Monorepo Structure 📁
 
 ```
 backend/         Flask API (runnable now)
@@ -42,7 +42,7 @@ docker-compose.yml
 README.md
 ```
 
-## Quickstart
+## Quickstart 🧪
 
 ### Prerequisites
 
@@ -80,7 +80,7 @@ npm run dev -- --host
 - Frontend: `http://localhost:5173`
 - Proxies or `.env` would point to API at `http://localhost:5001`
 
-### Docker (API + Postgres)
+### Docker (API + Postgres) 🐳
 
 ```
 cp .env.example .env
@@ -90,7 +90,7 @@ docker compose up --build
 - API: `http://localhost:5001`
 - Postgres: `localhost:5432` (user/pass/db: `sellpoint`)
 
-## Environment Variables
+## Environment Variables 🔧
 
 Root `.env` (for docker-compose):
 ```
@@ -109,12 +109,12 @@ JWT_SECRET_KEY=change-me
 DATABASE_URL=sqlite:///sellpoint.db
 ```
 
-## API Overview (MVP)
+## API Overview (MVP) 📚
 
-- Auth
-  - POST `/api/auth/register`: { email, password, name?, role? } → access_token, user
-  - POST `/api/auth/login`: { email, password } → access_token, user
-  - GET `/api/auth/me` (JWT)
+- Auth (no JWT; pass `user_id` where needed)
+  - POST `/api/auth/register`: { email, password, name?, role? } → user
+  - POST `/api/auth/login`: { email, password } → user
+  - GET `/api/auth/me?user_id=ID`
 
 - Products
   - GET `/api/products` query params:
@@ -134,17 +134,28 @@ DATABASE_URL=sqlite:///sellpoint.db
   - PATCH `/api/stores/:id` (owner)
   - DELETE `/api/stores/:id` (owner)
 
-- Cart
+- Users
+  - GET `/api/users` list
+  - GET `/api/users/:id`
+  - PATCH `/api/users/:id` { name?, avatar_url? }
+  - GET `/api/users/:id/cart`
+  - GET `/api/users/:id/orders`
+
+- Cart (requires `user_id` query)
   - GET `/api/cart`
   - POST `/api/cart` { productId, quantity }
   - PATCH `/api/cart/:itemId` { quantity }
   - DELETE `/api/cart/:itemId`
 
-- Orders
+- Orders (requires `user_id` query)
   - POST `/api/orders` (creates order from current cart, decrements stock)
   - GET `/api/orders` (buyer’s orders)
 
-## Data Model (Simplified)
+- Uploads
+  - POST `/api/uploads` (form-data field `file`) → { url }
+  - GET `/api/uploads/:filename`
+
+## Data Model (Simplified) 🧱
 
 - `User`: id, email, password_hash, name, avatar_url, role, created_at
 - `Store`: id, owner_id, name, description, logo_url, rating
@@ -156,7 +167,7 @@ DATABASE_URL=sqlite:///sellpoint.db
 
 Notes:
 - Dynamic specs via key/value (`ProductSpecification`)
-- Image handling is URL-based in MVP; integrate S3/Cloudinary later
+- Image handling is served from `/api/uploads` (local). Swap to S3/Cloudinary later.
 
 ## Auth Notes
 
