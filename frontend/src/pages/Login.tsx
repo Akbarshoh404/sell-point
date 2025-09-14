@@ -6,13 +6,13 @@ import { useAuth } from '../store/auth'
 
 export default function Login() {
   const nav = useNavigate()
-  const { setUser, hydrate, user } = useAuth()
+  const { setUser, hydrate, user, hydrated } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => { hydrate() }, [hydrate])
-  useEffect(() => { if (user) nav('/') }, [user, nav])
+  useEffect(() => { if (hydrated && user) nav('/') }, [hydrated, user, nav])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()

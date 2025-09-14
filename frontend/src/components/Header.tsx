@@ -6,7 +6,7 @@ import { useAuth } from '../store/auth'
 import { useCart } from '../store/cart'
 
 export default function Header() {
-  const { user, token, logout, hydrate } = useAuth()
+  const { user, hydrated, logout, hydrate } = useAuth()
   const { items } = useCart()
   const nav = useNavigate()
   useEffect(() => { hydrate() }, [hydrate])
@@ -24,7 +24,7 @@ export default function Header() {
           <Link to="/cart" className="font-medium relative">🛍️ Cart
             {items?.length ? <span className="absolute -top-2 -right-3 bg-emerald-600 text-white text-xs px-1.5 rounded-full">{items.length}</span> : null}
           </Link>
-          {token ? (
+          {hydrated && user ? (
             <>
               <Link to="/orders">📦 Orders</Link>
               {user?.role === 'seller' && (<Link to="/seller">Seller</Link>)}
