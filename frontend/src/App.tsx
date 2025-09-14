@@ -11,6 +11,9 @@ import Profile from './pages/Profile'
 import Orders from './pages/Orders'
 import SellerDashboard from './pages/SellerDashboard'
 import AdminDashboard from './pages/AdminDashboard'
+import About from './pages/About'
+import Contact from './pages/Contact'
+import FAQ from './pages/FAQ'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useAuth } from './store/auth'
 import { useCart } from './store/cart'
@@ -48,6 +51,9 @@ export default function App() {
             <Route path="/orders" element={<Orders />} />
             <Route path="/seller" element={<SellerDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/faq" element={<FAQ />} />
           </Route>
         </Routes>
       </main>
