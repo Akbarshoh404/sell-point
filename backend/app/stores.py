@@ -12,7 +12,7 @@ def list_stores():
     return [{'id': s.id, 'name': s.name, 'description': s.description, 'logo': s.logo_url, 'rating': s.rating, 'ownerId': s.owner_id} for s in stores]
 
 @bp.post('')
-@jwt_required()
+#@jwt_required()
 def create_store():
     uid = int(get_jwt_identity())
     user = User.query.get_or_404(uid)
@@ -30,7 +30,7 @@ def get_store(sid: int):
     return {'id': s.id, 'name': s.name, 'description': s.description, 'logo': s.logo_url, 'rating': s.rating, 'ownerId': s.owner_id}
 
 @bp.patch('/<int:sid>')
-@jwt_required()
+#@jwt_required()
 def update_store(sid: int):
     uid = int(get_jwt_identity())
     s = Store.query.get_or_404(sid)
@@ -47,7 +47,7 @@ def update_store(sid: int):
     return {'id': s.id, 'name': s.name, 'description': s.description, 'logo': s.logo_url, 'rating': s.rating, 'ownerId': s.owner_id}
 
 @bp.delete('/<int:sid>')
-@jwt_required()
+#@jwt_required()
 def delete_store(sid: int):
     uid = int(get_jwt_identity())
     s = Store.query.get_or_404(sid)

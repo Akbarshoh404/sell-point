@@ -7,14 +7,14 @@ from .models import CartItem, Product
 bp = Blueprint('cart', __name__)
 
 @bp.get('')
-@jwt_required()
+#@jwt_required()
 def list_cart():
     uid = int(get_jwt_identity())
     items = CartItem.query.filter_by(user_id=uid).all()
     return [{'id': i.id, 'productId': i.product_id, 'quantity': i.quantity} for i in items]
 
 @bp.post('')
-@jwt_required()
+#@jwt_required()
 def add_cart():
     uid = int(get_jwt_identity())
     data = request.get_json() or {}
@@ -31,7 +31,7 @@ def add_cart():
     return {'id': item.id, 'productId': item.product_id, 'quantity': item.quantity}, 201
 
 @bp.patch('/<int:item_id>')
-@jwt_required()
+#@jwt_required()
 def update_cart(item_id: int):
     uid = int(get_jwt_identity())
     data = request.get_json() or {}
@@ -44,7 +44,7 @@ def update_cart(item_id: int):
     return {'id': item.id, 'productId': item.product_id, 'quantity': item.quantity}
 
 @bp.delete('/<int:item_id>')
-@jwt_required()
+#@jwt_required()
 def remove_cart(item_id: int):
     uid = int(get_jwt_identity())
     item = CartItem.query.get_or_404(item_id)

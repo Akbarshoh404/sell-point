@@ -87,7 +87,7 @@ def get_product(pid: int):
     return _serialize_product(p)
 
 @bp.post('')
-@jwt_required()
+#@jwt_required()
 def create_product():
     uid = int(get_jwt_identity())
     user = User.query.get_or_404(uid)
@@ -119,7 +119,7 @@ def create_product():
 
 @bp.put('/<int:pid>')
 @bp.patch('/<int:pid>')
-@jwt_required()
+#@jwt_required()
 def update_product(pid: int):
     uid = int(get_jwt_identity())
     p = Product.query.get_or_404(pid)
@@ -145,7 +145,7 @@ def update_product(pid: int):
     return _serialize_product(p)
 
 @bp.delete('/<int:pid>')
-@jwt_required()
+#@jwt_required()
 def delete_product(pid: int):
     uid = int(get_jwt_identity())
     p = Product.query.get_or_404(pid)

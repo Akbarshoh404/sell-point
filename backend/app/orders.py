@@ -7,7 +7,7 @@ from .models import CartItem, Order, OrderItem, Product
 bp = Blueprint('orders', __name__)
 
 @bp.post('')
-@jwt_required()
+#@jwt_required()
 def create_order():
     uid = int(get_jwt_identity())
     cart_items = CartItem.query.filter_by(user_id=uid).all()
@@ -31,7 +31,7 @@ def create_order():
     return {'id': order.id, 'totalPrice': order.total_price, 'paymentStatus': order.payment_status, 'deliveryStatus': order.delivery_status}, 201
 
 @bp.get('')
-@jwt_required()
+#@jwt_required()
 def list_orders():
     uid = int(get_jwt_identity())
     orders = Order.query.filter_by(buyer_id=uid).order_by(Order.created_at.desc()).all()

@@ -36,7 +36,7 @@ def login():
     return {'access_token': token, 'user': {'id': user.id, 'email': user.email, 'role': user.role, 'name': user.name}}
 
 @bp.get('/me')
-@jwt_required()
+#@jwt_required()
 def me():
     uid = get_jwt_identity()
     user = User.query.get(int(uid))
