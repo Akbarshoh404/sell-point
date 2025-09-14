@@ -12,7 +12,7 @@ export default function Login() {
   const [error, setError] = useState('')
 
   useEffect(() => { hydrate() }, [hydrate])
-  useEffect(() => { if (user) nav('/') }, [token, nav])
+  useEffect(() => { if (user) nav('/') }, [user, nav])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -28,13 +28,13 @@ export default function Login() {
   }
 
   return (
-    <div className="max-w-md mx-auto space-y-4">
+    <div className="max-w-md mx-auto space-y-4 bg-white/90 backdrop-blur rounded-xl p-6 shadow-sm">
       <h1 className="text-xl font-bold">Login</h1>
       {error && <div className="text-red-600 text-sm">{error}</div>}
       <form onSubmit={submit} className="space-y-3">
         <input className="w-full border p-2 rounded" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
         <input className="w-full border p-2 rounded" placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
-        <button className="border px-4 py-2 rounded">Login</button>
+        <button className="border px-4 py-2 rounded bg-emerald-600 text-white w-full">Login</button>
       </form>
       <div className="text-sm">No account? <Link className="underline" to="/register">Register</Link></div>
     </div>

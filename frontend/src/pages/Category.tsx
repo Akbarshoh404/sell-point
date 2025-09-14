@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import { API_BASE } from "../lib/config"
+import ProductCard from "../components/ProductCard"
 
 type Product = { id:number; title:string; price:number; discount:number; images:string[]; brand?:string; model?:string; condition:string; stock:number }
 
@@ -44,11 +45,6 @@ export default function Category() {
       </select>
       <input value={priceMin} onChange={e=>setPriceMin(e.target.value)} className="border p-2 rounded w-full" placeholder="Min Price"/>
       <input value={priceMax} onChange={e=>setPriceMax(e.target.value)} className="border p-2 rounded w-full" placeholder="Max Price"/>
-      <select value={sort} onChange={e=>setSort(e.target.value)} className="border p-2 rounded w-full">
-        <option value="newest">Newest</option>
-        <option value="price_asc">Price Low→High</option>
-        <option value="price_desc">Price High→Low</option>
-      </select>
     </>
   )
 
@@ -68,14 +64,19 @@ export default function Category() {
 
       </div>
       <div className="md:col-span-3">
+      <div className="md:col-span-3 space-y-4">
+        <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50 border rounded p-3">
+          <div className="text-sm text-gray-600">{items.length} results</div>
+          <select value={sort} onChange={e=>setSort(e.target.value)} className="border p-2 rounded">
+            <option value="newest">Newest</option>
+            <option value="price_asc">Price Low→High</option>
+            <option value="price_desc">Price High→Low</option>
+          </select>
+        </div>
       {loading ? <div>Loading...</div> : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {items.map(p => (
-            <Link key={p.id} to={`/product/${p.id}`} className="border rounded p-3 hover:shadow">
-              <div className="text-sm text-gray-500">{p.brand} {p.model}</div>
-              <div className="font-medium">{p.title}</div>
-              <div className="text-lg">${(p.price - p.discount).toFixed(2)}</div>
-            </Link>
+            <ProductCard key={p.id} product={p} />
           ))}
         </div>
       )}
