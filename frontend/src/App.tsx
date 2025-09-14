@@ -38,7 +38,7 @@ export default function App() {
         </div>
       )}
       
-      <main className="container mx-auto p-4 flex-1">
+      <main className="container mx-auto p-4 flex-1 animate-fade-in-slow">
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/category/:category" element={<Category />} />

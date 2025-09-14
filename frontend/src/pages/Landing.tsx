@@ -12,7 +12,7 @@ export default function Landing() {
     setItems(data.items || [])
   })() }, [])
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 animate-fade-in">
       <section className="text-center space-y-4 py-10">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Buy & Sell Electronics</h1>
         <p className="text-gray-600 max-w-2xl mx-auto">Find the latest phones, laptops, PCs, consoles, and accessories at the best prices.</p>
