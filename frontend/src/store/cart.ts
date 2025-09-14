@@ -21,20 +21,20 @@ export const useCart = create<CartState>((set, get) => ({
   async fetch() {
     set({ loading: true })
     try {
-      const { data } = await api.get('/api/cart')
+      const { data } = await api.get(`/api/cart?user_id=${useAuth.getState().user?.id || ''}`)
       set({ items: data })
     } finally { set({ loading: false }) }
   },
   async add(productId, quantity = 1) {
-    await api.post('/api/cart', { productId, quantity })
+    await api.post(`/api/cart?user_id=${useAuth.getState().user?.id || ''}`, { productId, quantity })
     await get().fetch()
   },
   async update(itemId, quantity) {
-    await api.patch(`/api/cart/${itemId}`, { quantity })
+    await api.patch(`/api/cart/${itemId}?user_id=${useAuth.getState().user?.id || ''}`, { quantity })
     await get().fetch()
   },
   async remove(itemId) {
-    await api.delete(`/api/cart/${itemId}`)
+    await api.delete(`/api/cart/${itemId}?user_id=${useAuth.getState().user?.id || ''}`)
     await get().fetch()
   },
   async checkout() {

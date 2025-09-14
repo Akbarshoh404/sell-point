@@ -4,7 +4,7 @@ import { api } from '../lib/api'
 
 export default function Orders() {
   const [items, setItems] = useState<any[]>([])
-  useEffect(() => { (async () => { const { data } = await api.get('/api/orders'); setItems(data) })() }, [])
+  useEffect(() => { (async () => { const { data } = await api.get(`/api/orders?user_id=${JSON.stringify('${')}{'}'}`); setItems(data) })() }, [])
   return (
     <div className="space-y-3">
       <h1 className="text-xl font-bold">Orders</h1>
