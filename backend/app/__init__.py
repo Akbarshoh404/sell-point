@@ -11,6 +11,8 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///sellpoint.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JSON_SORT_KEYS'] = False
+    app.config['UPLOADS_DIR'] = os.path.join(os.path.dirname(__file__), '..', 'uploads')
+    app.config['UPLOADS_URL_PREFIX'] = '/api/uploads'
 
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
@@ -23,6 +25,7 @@ def create_app():
     from .cart import bp as cart_bp
     from .orders import bp as orders_bp
     from .users import bp as users_bp
+    from .uploads import bp as uploads_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(products_bp, url_prefix='/api/products')
@@ -30,6 +33,7 @@ def create_app():
     app.register_blueprint(cart_bp, url_prefix='/api/cart')
     app.register_blueprint(orders_bp, url_prefix='/api/orders')
     app.register_blueprint(users_bp, url_prefix='/api/users')
+    app.register_blueprint(uploads_bp, url_prefix=app.config['UPLOADS_URL_PREFIX'])
 
     with app.app_context():
         db.create_all()

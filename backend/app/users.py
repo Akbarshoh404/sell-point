@@ -1,5 +1,6 @@
 from flask import Blueprint, request
 from .models import User, CartItem, Order
+from . import db
 
 bp = Blueprint('users', __name__)
 
@@ -14,6 +15,17 @@ def list_users():
 @bp.get('/<int:uid>')
 def get_user(uid: int):
     u = User.query.get_or_404(uid)
+    return _serialize_user(u)
+
+@bp.patch('/<int:uid>')
+def update_user(uid: int):
+    u = User.query.get_or_404(uid)
+    data = request.get_json() or {}
+    if 'name' in data:
+        u.name = data['name']
+    if 'avatar_url' in data:
+        u.avatar_url = data['avatar_url']
+    db.session.commit()
     return _serialize_user(u)
 
 @bp.get('/<int:uid>/cart')
