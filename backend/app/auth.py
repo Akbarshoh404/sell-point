@@ -1,6 +1,5 @@
 
 from flask import Blueprint, request
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from . import db
 from .models import User, UserRole
 
@@ -21,8 +20,7 @@ def register():
     user.set_password(password)
     db.session.add(user)
     db.session.commit()
-    token = create_access_token(identity=str(user.id))
-    return {'access_token': token, 'user': {'id': user.id, 'email': user.email, 'role': user.role, 'name': user.name}}, 201
+    return {'user': {'id': user.id, 'email': user.email, 'role': user.role, 'name': user.name}}, 201
 
 @bp.post('/login')
 def login():
@@ -32,14 +30,14 @@ def login():
     user = User.query.filter_by(email=email).first()
     if not user or not user.check_password(password):
         return {'message': 'invalid credentials'}, 401
-    token = create_access_token(identity=str(user.id))
-    return {'access_token': token, 'user': {'id': user.id, 'email': user.email, 'role': user.role, 'name': user.name}}
+    return {'user': {'id': user.id, 'email': user.email, 'role': user.role, 'name': user.name}}
 
 @bp.get('/me')
-#@jwt_required()
 def me():
-    uid = get_jwt_identity()
-    user = User.query.get(int(uid))
+    user_id = request.args.get('user_id', type=int)
+    if not user_id:
+      return {'message': 'user_id required'}, 400
+    user = User.query.get(int(user_id))
     if not user:
         return {'message': 'not found'}, 404
     return {'id': user.id, 'email': user.email, 'role': user.role, 'name': user.name, 'avatar_url': user.avatar_url}

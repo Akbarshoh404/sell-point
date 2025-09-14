@@ -1,7 +1,7 @@
 
 import json
 from flask import Blueprint, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import abort
 from sqlalchemy import and_, or_
 from . import db
 from .models import Product, ProductSpecification, User
@@ -87,10 +87,13 @@ def get_product(pid: int):
     return _serialize_product(p)
 
 @bp.post('')
-#@jwt_required()
 def create_product():
-    uid = int(get_jwt_identity())
-    user = User.query.get_or_404(uid)
+    uid = request.args.get('user_id', type=int)
+    if not uid:
+        return {'message': 'user_id required'}, 400
+    user = User.query.get(uid)
+    if not user:
+        return {'message': 'user not found'}, 404
     if user.role not in ('seller', 'admin'):
         return {'message': 'seller or admin required'}, 403
     data = request.get_json() or {}
@@ -119,9 +122,10 @@ def create_product():
 
 @bp.put('/<int:pid>')
 @bp.patch('/<int:pid>')
-#@jwt_required()
 def update_product(pid: int):
-    uid = int(get_jwt_identity())
+    uid = request.args.get('user_id', type=int)
+    if not uid:
+        return {'message': 'user_id required'}, 400
     p = Product.query.get_or_404(pid)
     if p.seller_id != uid:
         return {'message': 'not owner'}, 403
@@ -145,9 +149,10 @@ def update_product(pid: int):
     return _serialize_product(p)
 
 @bp.delete('/<int:pid>')
-#@jwt_required()
 def delete_product(pid: int):
-    uid = int(get_jwt_identity())
+    uid = request.args.get('user_id', type=int)
+    if not uid:
+        return {'message': 'user_id required'}, 400
     p = Product.query.get_or_404(pid)
     if p.seller_id != uid:
         return {'message': 'not owner'}, 403

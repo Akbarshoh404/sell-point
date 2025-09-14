@@ -1,22 +1,23 @@
 
 from flask import Blueprint, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
 from . import db
 from .models import CartItem, Product
 
 bp = Blueprint('cart', __name__)
 
 @bp.get('')
-#@jwt_required()
 def list_cart():
-    uid = int(get_jwt_identity())
+    uid = request.args.get('user_id', type=int)
+    if not uid:
+        return {'message': 'user_id required'}, 400
     items = CartItem.query.filter_by(user_id=uid).all()
     return [{'id': i.id, 'productId': i.product_id, 'quantity': i.quantity} for i in items]
 
 @bp.post('')
-#@jwt_required()
 def add_cart():
-    uid = int(get_jwt_identity())
+    uid = request.args.get('user_id', type=int)
+    if not uid:
+        return {'message': 'user_id required'}, 400
     data = request.get_json() or {}
     product_id = int(data.get('productId'))
     quantity = int(data.get('quantity', 1))
@@ -31,9 +32,10 @@ def add_cart():
     return {'id': item.id, 'productId': item.product_id, 'quantity': item.quantity}, 201
 
 @bp.patch('/<int:item_id>')
-#@jwt_required()
 def update_cart(item_id: int):
-    uid = int(get_jwt_identity())
+    uid = request.args.get('user_id', type=int)
+    if not uid:
+        return {'message': 'user_id required'}, 400
     data = request.get_json() or {}
     item = CartItem.query.get_or_404(item_id)
     if item.user_id != uid:
@@ -44,9 +46,10 @@ def update_cart(item_id: int):
     return {'id': item.id, 'productId': item.product_id, 'quantity': item.quantity}
 
 @bp.delete('/<int:item_id>')
-#@jwt_required()
 def remove_cart(item_id: int):
-    uid = int(get_jwt_identity())
+    uid = request.args.get('user_id', type=int)
+    if not uid:
+        return {'message': 'user_id required'}, 400
     item = CartItem.query.get_or_404(item_id)
     if item.user_id != uid:
         return {'message': 'not owner'}, 403

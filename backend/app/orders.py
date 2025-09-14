@@ -1,15 +1,15 @@
 
-from flask import Blueprint
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import Blueprint, request
 from . import db
 from .models import CartItem, Order, OrderItem, Product
 
 bp = Blueprint('orders', __name__)
 
 @bp.post('')
-#@jwt_required()
 def create_order():
-    uid = int(get_jwt_identity())
+    uid = request.args.get('user_id', type=int)
+    if not uid:
+        return {'message': 'user_id required'}, 400
     cart_items = CartItem.query.filter_by(user_id=uid).all()
     if not cart_items:
         return {'message': 'cart empty'}, 400
@@ -31,8 +31,9 @@ def create_order():
     return {'id': order.id, 'totalPrice': order.total_price, 'paymentStatus': order.payment_status, 'deliveryStatus': order.delivery_status}, 201
 
 @bp.get('')
-#@jwt_required()
 def list_orders():
-    uid = int(get_jwt_identity())
+    uid = request.args.get('user_id', type=int)
+    if not uid:
+        return {'message': 'user_id required'}, 400
     orders = Order.query.filter_by(buyer_id=uid).order_by(Order.created_at.desc()).all()
     return [{'id': o.id, 'totalPrice': o.total_price, 'paymentStatus': o.payment_status, 'deliveryStatus': o.delivery_status, 'createdAt': o.created_at.isoformat()} for o in orders]
