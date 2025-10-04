@@ -47,7 +47,8 @@ README.md
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.11+ with pip3
+- MongoDB (local or Docker)
 - Node 18+ and npm (for frontend)
 - Docker & docker-compose (optional)
 
@@ -55,11 +56,9 @@ README.md
 
 ```
 cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 cp .env.example .env
-flask --app wsgi:app run --host 0.0.0.0 --port 5001
+python3 wsgi.py
 ```
 
 - API base URL: `http://localhost:5001`
@@ -82,7 +81,30 @@ npm run dev -- --host
 - Frontend: `http://localhost:5173`
 - Proxies or `.env` would point to API at `http://localhost:5001`
 
-### Docker (API + MongoDB) 🐳
+### Local MongoDB Setup
+
+If you don't have MongoDB installed locally:
+
+**Option 1: Install MongoDB locally**
+```bash
+# Ubuntu/Debian
+sudo apt-get install mongodb
+
+# macOS with Homebrew
+brew install mongodb-community
+
+# Start MongoDB
+sudo systemctl start mongod  # Linux
+brew services start mongodb-community  # macOS
+```
+
+**Option 2: Use Docker for MongoDB only**
+```bash
+# Run just MongoDB in Docker
+docker run -d --name mongodb -p 27017:27017 mongo:7.0
+```
+
+### Docker (Full Stack) 🐳
 
 ```
 cp .env.example .env
@@ -91,6 +113,25 @@ docker compose up --build
 
 - API: `http://localhost:5001`
 - MongoDB: `localhost:27017` (user/pass: `sellpoint`)
+
+## Quick Test 🧪
+
+After starting the backend, test it:
+
+```bash
+# Test health endpoint
+curl http://localhost:5001/api/health
+
+# Test user registration
+curl -X POST http://localhost:5001/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123","name":"Test User"}'
+
+# Test user login
+curl -X POST http://localhost:5001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123"}'
+```
 
 ## Environment Variables 🔧
 
