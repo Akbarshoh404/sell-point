@@ -1,10 +1,8 @@
-
 import json
 from flask import Blueprint, request
-from flask import abort
-from sqlalchemy import and_, or_
-from . import db
-from .models import Product, ProductSpecification, User
+from bson import ObjectId
+from . import get_db
+from .models import Product, User
 
 bp = Blueprint('products', __name__)
 
@@ -25,81 +23,130 @@ def _serialize_product(p: Product):
         'stock': p.stock,
         'createdAt': p.created_at.isoformat(),
         'updatedAt': p.updated_at.isoformat() if p.updated_at else None,
-        'specifications': {s.key: s.value for s in p.specifications},
+        'specifications': p.specifications,
     }
 
 @bp.get('')
 def list_products():
+    db = get_db()
+    
+    # Build query filters
+    query = {}
+    
     q = request.args.get('q')
+    if q:
+        query['$or'] = [
+            {'title': {'$regex': q, '$options': 'i'}},
+            {'description': {'$regex': q, '$options': 'i'}}
+        ]
+    
     category = request.args.get('category')
+    if category:
+        query['category'] = category
+    
     brand = request.args.get('brand')
+    if brand:
+        query['brand'] = brand
+    
     model = request.args.get('model')
+    if model:
+        query['model'] = model
+    
     condition = request.args.get('condition')
+    if condition:
+        query['condition'] = condition
+    
     price_min = request.args.get('price_min', type=float)
     price_max = request.args.get('price_max', type=float)
+    if price_min is not None or price_max is not None:
+        price_query = {}
+        if price_min is not None:
+            price_query['$gte'] = price_min
+        if price_max is not None:
+            price_query['$lte'] = price_max
+        query['price'] = price_query
+    
     in_stock = request.args.get('in_stock')
-
-    query = Product.query
-
-    if q:
-        like = f"%{q}%"
-        query = query.filter(or_(Product.title.ilike(like), Product.description.ilike(like)))
-    if category:
-        query = query.filter(Product.category == category)
-    if brand:
-        query = query.filter(Product.brand == brand)
-    if model:
-        query = query.filter(Product.model == model)
-    if condition:
-        query = query.filter(Product.condition == condition)
-    if price_min is not None:
-        query = query.filter(Product.price >= price_min)
-    if price_max is not None:
-        query = query.filter(Product.price <= price_max)
     if in_stock is not None:
-        query = query.filter(Product.stock > 0)
-
+        query['stock'] = {'$gt': 0}
+    
+    # Handle specification filters
     spec_filters = {k[5:]: v for k, v in request.args.items() if k.startswith('spec_')}
     for key, value in spec_filters.items():
-        query = query.join(ProductSpecification).filter(and_(ProductSpecification.key == key, ProductSpecification.value == value))
-
+        query[f'specifications.{key}'] = value
+    
+    # Build sort
     sort = request.args.get('sort')
+    sort_field = 'created_at'
+    sort_direction = -1  # descending
+    
     if sort == 'price_asc':
-        query = query.order_by(Product.price.asc())
+        sort_field = 'price'
+        sort_direction = 1
     elif sort == 'price_desc':
-        query = query.order_by(Product.price.desc())
-    else:
-        query = query.order_by(Product.created_at.desc())
-
+        sort_field = 'price'
+        sort_direction = -1
+    
+    # Pagination
     page = request.args.get('page', type=int, default=1)
     size = request.args.get('size', type=int, default=20)
-    items = query.paginate(page=page, per_page=size, error_out=False)
+    skip = (page - 1) * size
+    
+    # Execute query
+    cursor = db.products.find(query).sort(sort_field, sort_direction).skip(skip).limit(size)
+    products = [Product.from_dict(p) for p in cursor]
+    
+    # Get total count
+    total = db.products.count_documents(query)
+    pages = (total + size - 1) // size
+    
     return {
-        'items': [_serialize_product(p) for p in items.items],
-        'page': items.page,
-        'pages': items.pages,
-        'total': items.total,
+        'items': [_serialize_product(p) for p in products],
+        'page': page,
+        'pages': pages,
+        'total': total,
     }
 
-@bp.get('/<int:pid>')
-def get_product(pid: int):
-    p = Product.query.get_or_404(pid)
-    return _serialize_product(p)
+@bp.get('/<product_id>')
+def get_product(product_id: str):
+    db = get_db()
+    
+    try:
+        product_data = db.products.find_one({'_id': ObjectId(product_id)})
+    except:
+        return {'message': 'invalid product_id format'}, 400
+    
+    if not product_data:
+        return {'message': 'product not found'}, 404
+    
+    product = Product.from_dict(product_data)
+    return _serialize_product(product)
 
 @bp.post('')
 def create_product():
-    uid = request.args.get('user_id', type=int)
+    uid = request.args.get('user_id', type=str)
     if not uid:
         return {'message': 'user_id required'}, 400
-    user = User.query.get(uid)
-    if not user:
+    
+    db = get_db()
+    
+    try:
+        user_data = db.users.find_one({'_id': ObjectId(uid)})
+    except:
+        return {'message': 'invalid user_id format'}, 400
+    
+    if not user_data:
         return {'message': 'user not found'}, 404
+    
+    user = User.from_dict(user_data)
     if user.role not in ('seller', 'admin'):
         return {'message': 'seller or admin required'}, 403
+    
     data = request.get_json() or {}
     specs = data.pop('specifications', {}) or {}
     images = data.pop('images', []) or []
-    p = Product(
+    
+    product = Product(
         title=data.get('title'),
         description=data.get('description'),
         price=float(data.get('price', 0)),
@@ -112,50 +159,88 @@ def create_product():
         seller_id=uid,
         store_id=data.get('storeId'),
         stock=int(data.get('stock', 0)),
+        specifications=specs
     )
-    db.session.add(p)
-    db.session.flush()
-    for k, v in specs.items():
-        db.session.add(ProductSpecification(product_id=p.id, key=str(k), value=str(v)))
-    db.session.commit()
-    return _serialize_product(p), 201
+    
+    product_data = product.to_dict()
+    result = db.products.insert_one(product_data)
+    product._id = result.inserted_id
+    
+    return _serialize_product(product), 201
 
-@bp.put('/<int:pid>')
-@bp.patch('/<int:pid>')
-def update_product(pid: int):
-    uid = request.args.get('user_id', type=int)
+@bp.put('/<product_id>')
+@bp.patch('/<product_id>')
+def update_product(product_id: str):
+    uid = request.args.get('user_id', type=str)
     if not uid:
         return {'message': 'user_id required'}, 400
-    p = Product.query.get_or_404(pid)
-    if p.seller_id != uid:
+    
+    db = get_db()
+    
+    try:
+        product_data = db.products.find_one({'_id': ObjectId(product_id)})
+    except:
+        return {'message': 'invalid product_id format'}, 400
+    
+    if not product_data:
+        return {'message': 'product not found'}, 404
+    
+    product = Product.from_dict(product_data)
+    if product.seller_id != uid:
         return {'message': 'not owner'}, 403
+    
     data = request.get_json() or {}
+    update_data = {}
+    
+    # Update fields
     for field in ['title', 'description', 'brand', 'model', 'category', 'condition']:
         if field in data:
-            setattr(p, field, data[field])
+            update_data[field] = data[field]
+    
     if 'price' in data:
-        p.price = float(data['price'])
+        update_data['price'] = float(data['price'])
     if 'discount' in data:
-        p.discount = float(data['discount'])
+        update_data['discount'] = float(data['discount'])
     if 'stock' in data:
-        p.stock = int(data['stock'])
+        update_data['stock'] = int(data['stock'])
     if 'images' in data:
-        p.images_json = json.dumps(data.get('images') or [])
+        update_data['images_json'] = json.dumps(data.get('images') or [])
     if 'specifications' in data:
-        ProductSpecification.query.filter_by(product_id=p.id).delete()
-        for k, v in (data.get('specifications') or {}).items():
-            db.session.add(ProductSpecification(product_id=p.id, key=str(k), value=str(v)))
-    db.session.commit()
-    return _serialize_product(p)
+        update_data['specifications'] = data.get('specifications') or {}
+    
+    update_data['updated_at'] = product.updated_at
+    
+    # Update in database
+    db.products.update_one(
+        {'_id': ObjectId(product_id)},
+        {'$set': update_data}
+    )
+    
+    # Get updated product
+    updated_data = db.products.find_one({'_id': ObjectId(product_id)})
+    updated_product = Product.from_dict(updated_data)
+    
+    return _serialize_product(updated_product)
 
-@bp.delete('/<int:pid>')
-def delete_product(pid: int):
-    uid = request.args.get('user_id', type=int)
+@bp.delete('/<product_id>')
+def delete_product(product_id: str):
+    uid = request.args.get('user_id', type=str)
     if not uid:
         return {'message': 'user_id required'}, 400
-    p = Product.query.get_or_404(pid)
-    if p.seller_id != uid:
+    
+    db = get_db()
+    
+    try:
+        product_data = db.products.find_one({'_id': ObjectId(product_id)})
+    except:
+        return {'message': 'invalid product_id format'}, 400
+    
+    if not product_data:
+        return {'message': 'product not found'}, 404
+    
+    product = Product.from_dict(product_data)
+    if product.seller_id != uid:
         return {'message': 'not owner'}, 403
-    db.session.delete(p)
-    db.session.commit()
+    
+    db.products.delete_one({'_id': ObjectId(product_id)})
     return {'deleted': True}
