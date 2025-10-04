@@ -1,110 +1,259 @@
-
 from datetime import datetime
 from enum import Enum
-from typing import Optional, List
-from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import Index, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from . import db
+from typing import Optional, List, Dict, Any
+from bson import ObjectId
+import bcrypt
 
 class UserRole(str, Enum):
     buyer = 'buyer'
     seller = 'seller'
     admin = 'admin'
 
-class User(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(unique=True, index=True)
-    password_hash: Mapped[str]
-    name: Mapped[Optional[str]]
-    avatar_url: Mapped[Optional[str]]
-    role: Mapped[str] = mapped_column(default=UserRole.buyer.value)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+class User:
+    def __init__(self, email: str, password_hash: str, name: Optional[str] = None, 
+                 avatar_url: Optional[str] = None, role: str = UserRole.buyer.value, 
+                 created_at: Optional[datetime] = None, _id: Optional[ObjectId] = None):
+        self._id = _id or ObjectId()
+        self.email = email
+        self.password_hash = password_hash
+        self.name = name
+        self.avatar_url = avatar_url
+        self.role = role
+        self.created_at = created_at or datetime.utcnow()
 
-    stores: Mapped[List['Store']] = relationship(back_populates='owner')
-    cart_items: Mapped[List['CartItem']] = relationship(back_populates='user')
-    orders: Mapped[List['Order']] = relationship(back_populates='buyer')
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            '_id': self._id,
+            'email': self.email,
+            'password_hash': self.password_hash,
+            'name': self.name,
+            'avatar_url': self.avatar_url,
+            'role': self.role,
+            'created_at': self.created_at
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'User':
+        return cls(
+            _id=data['_id'],
+            email=data['email'],
+            password_hash=data['password_hash'],
+            name=data.get('name'),
+            avatar_url=data.get('avatar_url'),
+            role=data.get('role', UserRole.buyer.value),
+            created_at=data.get('created_at', datetime.utcnow())
+        )
 
     def set_password(self, password: str) -> None:
-        self.password_hash = generate_password_hash(password)
+        self.password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
     def check_password(self, password: str) -> bool:
-        return check_password_hash(self.password_hash, password)
+        return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
 
-class Store(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    owner_id: Mapped[int] = mapped_column(db.ForeignKey('user.id'))
-    name: Mapped[str]
-    description: Mapped[Optional[str]]
-    logo_url: Mapped[Optional[str]]
-    rating: Mapped[float] = mapped_column(default=0.0)
+    @property
+    def id(self):
+        return str(self._id)
 
-    owner: Mapped['User'] = relationship(back_populates='stores')
-    products: Mapped[List['Product']] = relationship(back_populates='store')
+class Store:
+    def __init__(self, owner_id: str, name: str, description: Optional[str] = None,
+                 logo_url: Optional[str] = None, rating: float = 0.0, _id: Optional[ObjectId] = None):
+        self._id = _id or ObjectId()
+        self.owner_id = owner_id
+        self.name = name
+        self.description = description
+        self.logo_url = logo_url
+        self.rating = rating
 
-    __table_args__ = (UniqueConstraint('owner_id', 'name', name='uq_store_owner_name'),)
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            '_id': self._id,
+            'owner_id': self.owner_id,
+            'name': self.name,
+            'description': self.description,
+            'logo_url': self.logo_url,
+            'rating': self.rating
+        }
 
-class Product(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    title: Mapped[str]
-    description: Mapped[Optional[str]]
-    price: Mapped[float]
-    discount: Mapped[float] = mapped_column(default=0.0)
-    condition: Mapped[str]
-    images_json: Mapped[str] = mapped_column(default='[]')
-    brand: Mapped[Optional[str]]
-    model: Mapped[Optional[str]]
-    category: Mapped[str]
-    seller_id: Mapped[int] = mapped_column(db.ForeignKey('user.id'))
-    store_id: Mapped[Optional[int]] = mapped_column(db.ForeignKey('store.id'))
-    stock: Mapped[int] = mapped_column(default=0)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, onupdate=datetime.utcnow)
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Store':
+        return cls(
+            _id=data['_id'],
+            owner_id=data['owner_id'],
+            name=data['name'],
+            description=data.get('description'),
+            logo_url=data.get('logo_url'),
+            rating=data.get('rating', 0.0)
+        )
 
-    seller: Mapped['User'] = relationship()
-    store: Mapped[Optional['Store']] = relationship(back_populates='products')
-    specifications: Mapped[List['ProductSpecification']] = relationship(back_populates='product', cascade='all, delete-orphan')
+    @property
+    def id(self):
+        return str(self._id)
 
-Index('ix_product_category_brand', Product.category, Product.brand)
+class Product:
+    def __init__(self, title: str, price: float, condition: str, category: str, 
+                 seller_id: str, description: Optional[str] = None, discount: float = 0.0,
+                 images_json: str = '[]', brand: Optional[str] = None, model: Optional[str] = None,
+                 store_id: Optional[str] = None, stock: int = 0, specifications: Optional[Dict[str, str]] = None,
+                 created_at: Optional[datetime] = None, updated_at: Optional[datetime] = None,
+                 _id: Optional[ObjectId] = None):
+        self._id = _id or ObjectId()
+        self.title = title
+        self.description = description
+        self.price = price
+        self.discount = discount
+        self.condition = condition
+        self.images_json = images_json
+        self.brand = brand
+        self.model = model
+        self.category = category
+        self.seller_id = seller_id
+        self.store_id = store_id
+        self.stock = stock
+        self.specifications = specifications or {}
+        self.created_at = created_at or datetime.utcnow()
+        self.updated_at = updated_at or datetime.utcnow()
 
-class ProductSpecification(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    product_id: Mapped[int] = mapped_column(db.ForeignKey('product.id'), index=True)
-    key: Mapped[str] = mapped_column(index=True)
-    value: Mapped[str] = mapped_column(index=True)
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            '_id': self._id,
+            'title': self.title,
+            'description': self.description,
+            'price': self.price,
+            'discount': self.discount,
+            'condition': self.condition,
+            'images_json': self.images_json,
+            'brand': self.brand,
+            'model': self.model,
+            'category': self.category,
+            'seller_id': self.seller_id,
+            'store_id': self.store_id,
+            'stock': self.stock,
+            'specifications': self.specifications,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at
+        }
 
-    product: Mapped['Product'] = relationship(back_populates='specifications')
-    __table_args__ = (Index('ix_spec_product_key_value', 'product_id', 'key', 'value'),)
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Product':
+        return cls(
+            _id=data['_id'],
+            title=data['title'],
+            description=data.get('description'),
+            price=data['price'],
+            discount=data.get('discount', 0.0),
+            condition=data['condition'],
+            images_json=data.get('images_json', '[]'),
+            brand=data.get('brand'),
+            model=data.get('model'),
+            category=data['category'],
+            seller_id=data['seller_id'],
+            store_id=data.get('store_id'),
+            stock=data.get('stock', 0),
+            specifications=data.get('specifications', {}),
+            created_at=data.get('created_at', datetime.utcnow()),
+            updated_at=data.get('updated_at', datetime.utcnow())
+        )
 
-class CartItem(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(db.ForeignKey('user.id'), index=True)
-    product_id: Mapped[int] = mapped_column(db.ForeignKey('product.id'))
-    quantity: Mapped[int] = mapped_column(default=1)
-    added_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    @property
+    def id(self):
+        return str(self._id)
 
-    user: Mapped['User'] = relationship(back_populates='cart_items')
-    product: Mapped['Product'] = relationship()
+class CartItem:
+    def __init__(self, user_id: str, product_id: str, quantity: int = 1,
+                 added_at: Optional[datetime] = None, _id: Optional[ObjectId] = None):
+        self._id = _id or ObjectId()
+        self.user_id = user_id
+        self.product_id = product_id
+        self.quantity = quantity
+        self.added_at = added_at or datetime.utcnow()
 
-    __table_args__ = (UniqueConstraint('user_id', 'product_id', name='uq_cartitem_user_product'),)
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            '_id': self._id,
+            'user_id': self.user_id,
+            'product_id': self.product_id,
+            'quantity': self.quantity,
+            'added_at': self.added_at
+        }
 
-class Order(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    buyer_id: Mapped[int] = mapped_column(db.ForeignKey('user.id'), index=True)
-    total_price: Mapped[float]
-    payment_status: Mapped[str] = mapped_column(default='pending')
-    delivery_status: Mapped[str] = mapped_column(default='processing')
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'CartItem':
+        return cls(
+            _id=data['_id'],
+            user_id=data['user_id'],
+            product_id=data['product_id'],
+            quantity=data.get('quantity', 1),
+            added_at=data.get('added_at', datetime.utcnow())
+        )
 
-    buyer: Mapped['User'] = relationship(back_populates='orders')
-    items: Mapped[List['OrderItem']] = relationship(back_populates='order', cascade='all, delete-orphan')
+    @property
+    def id(self):
+        return str(self._id)
 
-class OrderItem(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    order_id: Mapped[int] = mapped_column(db.ForeignKey('order.id'), index=True)
-    product_id: Mapped[int] = mapped_column(db.ForeignKey('product.id'))
-    quantity: Mapped[int]
-    price: Mapped[float]
+class Order:
+    def __init__(self, buyer_id: str, total_price: float, payment_status: str = 'pending',
+                 delivery_status: str = 'processing', created_at: Optional[datetime] = None,
+                 items: Optional[List['OrderItem']] = None, _id: Optional[ObjectId] = None):
+        self._id = _id or ObjectId()
+        self.buyer_id = buyer_id
+        self.total_price = total_price
+        self.payment_status = payment_status
+        self.delivery_status = delivery_status
+        self.created_at = created_at or datetime.utcnow()
+        self.items = items or []
 
-    order: Mapped['Order'] = relationship(back_populates='items')
-    product: Mapped['Product'] = relationship()
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            '_id': self._id,
+            'buyer_id': self.buyer_id,
+            'total_price': self.total_price,
+            'payment_status': self.payment_status,
+            'delivery_status': self.delivery_status,
+            'created_at': self.created_at,
+            'items': [item.to_dict() for item in self.items]
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Order':
+        items = [OrderItem.from_dict(item) for item in data.get('items', [])]
+        return cls(
+            _id=data['_id'],
+            buyer_id=data['buyer_id'],
+            total_price=data['total_price'],
+            payment_status=data.get('payment_status', 'pending'),
+            delivery_status=data.get('delivery_status', 'processing'),
+            created_at=data.get('created_at', datetime.utcnow()),
+            items=items
+        )
+
+    @property
+    def id(self):
+        return str(self._id)
+
+class OrderItem:
+    def __init__(self, product_id: str, quantity: int, price: float, _id: Optional[ObjectId] = None):
+        self._id = _id or ObjectId()
+        self.product_id = product_id
+        self.quantity = quantity
+        self.price = price
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            '_id': self._id,
+            'product_id': self.product_id,
+            'quantity': self.quantity,
+            'price': self.price
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'OrderItem':
+        return cls(
+            _id=data['_id'],
+            product_id=data['product_id'],
+            quantity=data['quantity'],
+            price=data['price']
+        )
+
+    @property
+    def id(self):
+        return str(self._id)

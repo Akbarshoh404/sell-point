@@ -1,10 +1,10 @@
 # SellPoint – Multi‑Vendor Electronics Marketplace ✨🛒
 
-SellPoint is a multi-vendor electronics marketplace where both individuals and stores can sell electronics such as phones, laptops, PCs, gaming consoles, and accessories. It supports dynamic specifications per category, advanced filtering, secure authentication, and basic cart/orders.
+SellPoint is a multi-vendor electronics marketplace where both individuals and stores can sell electronics such as phones, laptops, PCs, gaming consoles, and accessories. It supports dynamic specifications per category, advanced filtering, session-based authentication, and basic cart/orders.
 
 ## Features
 
-- Authentication: JWT-based (register, login, me)
+- Authentication: Session-based (register, login, logout, me)
 - User roles: buyer, seller, admin
 - Stores: professional sellers can manage store info and products
 - Products: common fields + dynamic specifications for each category
@@ -14,31 +14,32 @@ SellPoint is a multi-vendor electronics marketplace where both individuals and s
 
 ## Tech Stack ⚙️
 
-- Backend: Python, Flask, SQLAlchemy, JWT, CORS
-- Database: SQLite (dev default) or PostgreSQL via `DATABASE_URL`
+- Backend: Python, Flask, PyMongo, Session-based auth, CORS
+- Database: MongoDB
 - Frontend: React (Vite) + TypeScript + TailwindCSS + Zustand (planned in `frontend/`)
-- Deployment: Docker + docker-compose (API + Postgres)
+- Deployment: Docker + docker-compose (API + MongoDB)
 
 ## Monorepo Structure 📁
 
 ```
 backend/         Flask API (runnable now)
   app/
-    __init__.py  Flask app factory, blueprints
-    models.py    Users, Stores, Products, Specifications, Cart, Orders
-    auth.py      Register, Login, Me (JWT)
+    __init__.py  Flask app factory, blueprints, MongoDB setup
+    models.py    Users, Stores, Products, Cart, Orders (MongoDB models)
+    auth.py      Register, Login, Logout, Me (Session-based)
     products.py  CRUD + listing with filters
     stores.py    CRUD for stores
     cart.py      Cart endpoints
     orders.py    Order creation + listing
+    users.py     User management
+    uploads.py   File upload handling
   wsgi.py        WSGI entrypoint
   requirements.txt
-  .env.example
+  Dockerfile
 
 frontend/        React app (Vite) – scaffold planned
 
 docker-compose.yml
-.env.example
 README.md
 ```
 
@@ -62,11 +63,12 @@ flask --app wsgi:app run --host 0.0.0.0 --port 5001
 ```
 
 - API base URL: `http://localhost:5001`
-- Default DB: SQLite file `sellpoint.db` in `backend/`
+- Default DB: MongoDB at `mongodb://localhost:27017/sellpoint`
 
-To use PostgreSQL locally, set `DATABASE_URL` in `backend/.env`:
+To use MongoDB locally, set `MONGODB_URL` in `backend/.env`:
 ```
-DATABASE_URL=postgresql+psycopg2://user:password@localhost:5432/sellpoint
+MONGODB_URL=mongodb://localhost:27017/
+DATABASE_NAME=sellpoint
 ```
 
 ### Frontend (Local)
@@ -80,7 +82,7 @@ npm run dev -- --host
 - Frontend: `http://localhost:5173`
 - Proxies or `.env` would point to API at `http://localhost:5001`
 
-### Docker (API + Postgres) 🐳
+### Docker (API + MongoDB) 🐳
 
 ```
 cp .env.example .env
@@ -88,15 +90,16 @@ docker compose up --build
 ```
 
 - API: `http://localhost:5001`
-- Postgres: `localhost:5432` (user/pass/db: `sellpoint`)
+- MongoDB: `localhost:27017` (user/pass: `sellpoint`)
 
 ## Environment Variables 🔧
 
 Root `.env` (for docker-compose):
 ```
 BACKEND_PORT=5001
-DATABASE_URL=postgresql+psycopg2://sellpoint:sellpoint@db:5432/sellpoint
-JWT_SECRET_KEY=change-me
+MONGODB_URL=mongodb://sellpoint:sellpoint@mongodb:27017/
+DATABASE_NAME=sellpoint
+SECRET_KEY=change-me-in-production
 FLASK_ENV=development
 FLASK_DEBUG=1
 ```
@@ -105,16 +108,19 @@ Backend `.env.example` (local dev):
 ```
 FLASK_ENV=development
 FLASK_DEBUG=1
-JWT_SECRET_KEY=change-me
-DATABASE_URL=sqlite:///sellpoint.db
+SECRET_KEY=dev-secret-key-change-in-production
+MONGODB_URL=mongodb://localhost:27017/
+DATABASE_NAME=sellpoint
 ```
 
 ## API Overview (MVP) 📚
 
-- Auth (no JWT; pass `user_id` where needed)
+- Auth (Session-based; pass `user_id` where needed)
   - POST `/api/auth/register`: { email, password, name?, role? } → user
-  - POST `/api/auth/login`: { email, password } → user
-  - GET `/api/auth/me?user_id=ID`
+  - POST `/api/auth/login`: { email, password } → user (sets session)
+  - POST `/api/auth/logout`: → success message
+  - GET `/api/auth/me?user_id=ID`: → user info
+  - GET `/api/auth/session`: → current session info
 
 - Products
   - GET `/api/products` query params:
@@ -149,30 +155,30 @@ DATABASE_URL=sqlite:///sellpoint.db
 
 - Orders (requires `user_id` query)
   - POST `/api/orders` (creates order from current cart, decrements stock)
-  - GET `/api/orders` (buyer’s orders)
+  - GET `/api/orders` (buyer's orders)
 
 - Uploads
   - POST `/api/uploads` (form-data field `file`) → { url }
   - GET `/api/uploads/:filename`
 
-## Data Model (Simplified) 🧱
+## Data Model (MongoDB) 🧱
 
-- `User`: id, email, password_hash, name, avatar_url, role, created_at
-- `Store`: id, owner_id, name, description, logo_url, rating
-- `Product`: id, title, description, price, discount, condition, images_json, brand, model, category, seller_id, store_id, stock, timestamps
-- `ProductSpecification`: id, product_id, key, value
-- `CartItem`: id, user_id, product_id, quantity, added_at
-- `Order`: id, buyer_id, total_price, payment_status, delivery_status, created_at
-- `OrderItem`: id, order_id, product_id, quantity, price
+- `users`: { _id, email, password_hash, name, avatar_url, role, created_at }
+- `stores`: { _id, owner_id, name, description, logo_url, rating }
+- `products`: { _id, title, description, price, discount, condition, images_json, brand, model, category, seller_id, store_id, stock, specifications, timestamps }
+- `cart_items`: { _id, user_id, product_id, quantity, added_at }
+- `orders`: { _id, buyer_id, total_price, payment_status, delivery_status, created_at, items }
+- `order_items`: { _id, product_id, quantity, price }
 
 Notes:
-- Dynamic specs via key/value (`ProductSpecification`)
+- Dynamic specs stored as nested objects in products (`specifications` field)
 - Image handling is served from `/api/uploads` (local). Swap to S3/Cloudinary later.
+- MongoDB ObjectIds are used as primary keys
 
 ## Auth Notes
 
-- JWT Bearer tokens
-- Include header: `Authorization: Bearer <token>`
+- Session-based authentication using Flask sessions
+- No JWT tokens - uses server-side sessions
 - Roles:
   - buyer: default
   - seller: can create stores/products, manage inventory
@@ -180,10 +186,11 @@ Notes:
 
 ## Filtering & Search
 
-- Full-text-like search on `title/description` using `q` (ILIKE)
+- Full-text-like search on `title/description` using MongoDB regex
 - Range filters for price
 - Category-specific spec filters via `spec_*` query params
 - Sort by newest or price
+- MongoDB indexes for better performance
 
 ## Roadmap
 

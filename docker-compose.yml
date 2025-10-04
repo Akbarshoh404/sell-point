@@ -1,31 +1,32 @@
 version: "3.9"
 services:
-  db:
-    image: postgres:16
+  mongodb:
+    image: mongo:7.0
     environment:
-      POSTGRES_DB: sellpoint
-      POSTGRES_USER: sellpoint
-      POSTGRES_PASSWORD: sellpoint
+      MONGO_INITDB_ROOT_USERNAME: sellpoint
+      MONGO_INITDB_ROOT_PASSWORD: sellpoint
+      MONGO_INITDB_DATABASE: sellpoint
     volumes:
-      - sellpoint_pg:/var/lib/postgresql/data
+      - sellpoint_mongo:/data/db
     ports:
-      - "5432:5432"
+      - "27017:27017"
 
   backend:
     build: ./backend
     env_file:
       - .env
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - MONGODB_URL=${MONGODB_URL}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - SECRET_KEY=${SECRET_KEY}
       - FLASK_ENV=${FLASK_ENV}
       - FLASK_DEBUG=${FLASK_DEBUG}
       - BACKEND_PORT=${BACKEND_PORT}
     depends_on:
-      - db
+      - mongodb
     ports:
       - "${BACKEND_PORT}:5001"
     command: ["gunicorn", "wsgi:app", "-b", "0.0.0.0:5001", "--workers", "2"]
 
 volumes:
-  sellpoint_pg:
+  sellpoint_mongo:
